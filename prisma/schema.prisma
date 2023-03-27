@@ -1,0 +1,294 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model accounting_customers {
+  id              BigInt    @id @unique @default(autoincrement())
+  customer_id     String?
+  account_id      String?
+  customer_tax_id String?
+  company_name    String?
+  telephone       String?
+  fax             String?
+  website         String?
+  email           String?
+  contact         String?
+  address_detail  String?
+  city            String?
+  postal_code     String?
+  country         String?
+  consumer_id     BigInt?
+  document_id     BigInt?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  delete_at       DateTime?
+}
+
+model consumers {
+  id             BigInt           @id @default(autoincrement())
+  externalId     String
+  name           String
+  partnerId      String
+  partners       partners         @relation(fields: [partnerId], references: [id])
+  documents      documents[]
+  nifs           nifs[]
+  saft_customers saft_customers[]
+  saft_invoices  saft_invoices[]
+  saft_lines     saft_lines[]
+  saft_products  saft_products[]
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([partnerId], map: "partnerId__idx")
+}
+
+model datasets {
+  id           BigInt    @id() @default(autoincrement())
+  Document     BigInt
+  NextDocument BigInt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  delete_at    DateTime?
+}
+
+model document_periods {
+  id         BigInt    @id() @default(autoincrement())
+  month      Int
+  documentId BigInt
+  startDate  DateTime
+  endDate    DateTime
+  complete   Boolean
+  documents  documents @relation(fields: [documentId], references: [id])
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([documentId], map: "documentId__idx")
+}
+
+model documents {
+  id               BigInt             @id() @default(autoincrement())
+  year             Int
+  consumerId       BigInt
+  nifId            BigInt
+  Type             String             @default("SALES")
+  document_periods document_periods[]
+  consumers        consumers          @relation(fields: [consumerId], references: [id])
+  nifs             nifs               @relation(fields: [nifId], references: [id])
+  saft_invoices    saft_invoices[]
+  saft_lines       saft_lines[]
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([consumerId], map: "consumerId__idx")
+  @@index([nifId], map: "nifId__idx")
+}
+
+model gla_accounts {
+  id                     BigInt      @id @default(autoincrement())
+  account_id             String?
+  account_description    String?
+  opening_debit_balance  Float?
+  opening_credit_balance Float?
+  closing_debit_balance  Float?
+  closing_credit_balance Float?
+  grouping_category      String?
+  grouping_code          String?
+  taxonomy_code          Int?
+  year                   Int?
+  consumer_id            BigInt?
+  document_id            BigInt?
+  created_at             DateTime?
+  updated_at             DateTime?
+  delete_at              DateTime?
+  n1                     String      @default("")
+  n2                     String      @default("")
+  n3                     String      @default("")
+  n4                     String      @default("")
+  taxonomy               String      @default("")
+  taxonomy_class         String      @default("")
+  gle_lines              gle_lines[]
+}
+
+model gle_lines {
+  id                  BigInt       @id @default(autoincrement())
+  journal_id          String?
+  account_id          String?
+  supplier_id         String?
+  customer_id         BigInt?
+  description         String?
+  transaction_id      String?
+  transaction_date    DateTime?
+  doc_archival_number String?
+  transaction_type    String?
+  gl_posting_date     DateTime?
+  ammount             Float?
+  type                String?
+  consumer_id         BigInt?
+  year                Int?
+  document_id         BigInt?
+  gla_id              BigInt       @default(0)
+  month               Int          @default(0)
+  gla_accounts        gla_accounts @relation(fields: [gla_id], references: [id])
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+  delete_at           DateTime?
+
+  @@index([gla_id], map: "gla_id__idx")
+}
+
+model locations {
+  id         BigInt    @id() @default(autoincrement())
+  Address    String
+  Latitude   Float
+  Longitude  Float
+  PostalCode String    @default("N/A")
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+}
+
+model nifs {
+  id           BigInt      @id() @default(autoincrement())
+  number       String
+  consumerId   BigInt
+  currencyCode String      @default("")
+  type         String      @default("S")
+  documents    documents[]
+  consumers    consumers   @relation(fields: [consumerId], references: [id])
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([consumerId], map: "ConsumerId__idx")
+}
+
+model partners {
+  id           String      @id() @default(cuid())
+  name         String
+  apiKey       String
+  segmentation Boolean     @default(false)
+  consumers    consumers[]
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+}
+
+model pt_postal_codes {
+  id                 BigInt    @id() @default(autoincrement())
+  postal_designation String
+  postal_code        String
+  district           String
+  county             String
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  delete_at          DateTime?
+}
+
+model saft_customers {
+  id            BigInt          @id() @default(autoincrement())
+  internal_id   String
+  name          String
+  country       String
+  latitude      Float
+  longitude     Float
+  address       String
+  city          String
+  consumer_id   BigInt
+  email         String?
+  telephone     String?
+  from_saft     DateTime
+  segmentation  String          @default("")
+  consumers     consumers       @relation(fields: [consumer_id], references: [id])
+  saft_invoices saft_invoices[]
+  saft_lines    saft_lines[]
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([city], map: "city__idx")
+  @@index([consumer_id], map: "consumer_id__idx")
+  @@index([country], map: "country__idx")
+  @@index([name], map: "name__idx")
+}
+
+model saft_invoices {
+  id String @id() @default(cuid())
+
+  invoice_status String
+  invoice_type   String
+  date           DateTime
+  consumer_id    BigInt
+  document_id    BigInt
+  customer_id    BigInt
+  consumers      consumers      @relation(fields: [consumer_id], references: [id])
+  documents      documents      @relation(fields: [document_id], references: [id])
+  saft_customers saft_customers @relation(fields: [customer_id], references: [id])
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([consumer_id], map: "consumer_id__idx")
+  @@index([customer_id], map: "customer_id__idx")
+  @@index([document_id], map: "document_id__idx")
+}
+
+model saft_lines {
+  id                  BigInt         @id() @default(autoincrement())
+  quantity            Float
+  unit_price          Float
+  product_code        String
+  invoice_status      String
+  invoice_type        String
+  product_description String
+  date                DateTime
+  consumer_id         BigInt
+  document_id         BigInt
+  customer_id         BigInt
+  month               Int            @default(0)
+  year                Int            @default(0)
+  total               Float          @default(0.0)
+  invoice_id          String         @default("")
+  consumers           consumers      @relation(fields: [consumer_id], references: [id])
+  documents           documents      @relation(fields: [document_id], references: [id])
+  saft_customers      saft_customers @relation(fields: [customer_id], references: [id])
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  delete_at  DateTime?
+
+  @@index([consumer_id], map: "consumer_id__idx")
+  @@index([customer_id], map: "customer_id__idx")
+  @@index([document_id], map: "document_id__idx")
+  @@index([invoice_status], map: "invoice_status__idx")
+  @@index([invoice_type], map: "invoice_type__idx")
+  @@index([product_code], map: "product_code__idx")
+}
+
+model saft_products {
+  id           BigInt    @id() @default(autoincrement())
+  product_code String
+  segmentation String
+  consumer_id  BigInt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  delete_at    DateTime?
+  description  String    @default("")
+  consumers    consumers @relation(fields: [consumer_id], references: [id])
+
+  @@index([consumer_id], map: "consumer_id__idx")
+}

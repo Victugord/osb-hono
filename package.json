@@ -1,0 +1,20 @@
+{
+  "name": "osb-etl-api",
+  "version": "0.0.0",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230321.0",
+    "prisma": "^4.11.0",
+    "typescript": "^5.0.2",
+    "vitest": "^0.29.7",
+    "wrangler": "2.13.0"
+  },
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/index.ts"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.1.2",
+    "@prisma/client": "^4.11.0",
+    "hono": "^3.1.3"
+  }
+}
